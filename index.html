@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ᗜˬᗜ Fumo gambling ᗜˬᗜ</title>
+    <style>
+        body {
+            text-align: center;
+            background: #111;
+            color: #fff;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            overflow-x: hidden;
+        }
+        h1 { margin-top: 30px; }
+        .slot {
+            display: inline-block;
+            margin: 10px;
+            width: 150px;
+            height: 150px;
+            border: 4px solid #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #222;
+            box-shadow: 0 0 15px #000;
+        }
+        .slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            background: #ff4747;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #ff7070; }
+        #message {
+            display: none;
+            font-size: 2rem;
+            margin-top: 20px;
+            color: gold;
+            text-shadow: 0 0 10px gold, 0 0 20px yellow;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: red;
+            top: 0;
+            animation: fall linear forwards;
+            z-index: 999;
+            border-radius: 50%;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>ᗜˬᗜ Fumo gambling ᗜˬᗜ</h1>
+
+    <div id="slots">
+        <div class="slot"><img src="zdjecia/1.jpg"></div>
+        <div class="slot"><img src="zdjecia/2.jpg"></div>
+        <div class="slot"><img src="zdjecia/3.jpg"></div>
+    </div>
+
+    <button id="start">Roll</button>
+    <div id="message">ᗜˬᗜ FumoFumo! ᗜˬᗜ</div>
+
+<script>
+    const slots = document.querySelectorAll(".slot img");
+    const button = document.getElementById("start");
+    const message = document.getElementById("message");
+
+    // Dźwięki
+    const spinSound = new Audio("sfx/jakikolwiekjebanydzwiekzebytogownodzialalo.mp3");
+    spinSound.loop = true;
+    const stopSound = new Audio("sfx/fumo.mp3");
+    const winSound = new Audio("sfx/fumo.mp3");
+
+    function createConfetti() {
+        for (let i = 0; i < 80; i++) {
+            const confetti = document.createElement("div");
+            confetti.classList.add("confetti");
+            confetti.style.left = Math.random() * 100 + "vw";
+            confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            confetti.style.animationDuration = (2 + Math.random() * 3) + "s";
+            confetti.style.width = confetti.style.height = (6 + Math.random() * 6) + "px";
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 4000);
+        }
+    }
+
+    // LOSOWANIE PO STRONIE JAVASCRIPT
+    function getRandomResults() {
+        const results = [];
+        for (let i = 0; i < 3; i++) {
+            const n = Math.floor(Math.random() * 52) + 1; // 1–8
+            results.push(n);
+        }
+        return results;
+    }
+
+    async function spinSlots() {
+        button.disabled = true;
+        message.style.display = "none";
+
+        // zamiast fetch -> losowanie w JS
+        const results = getRandomResults(); // np. [3,7,1]
+
+        const baseMs = 1000;
+        const gapMs = 900;
+        let longestSpin = 0;
+
+        // start dźwięku obracania
+        spinSound.volume = 0.002;
+        try { spinSound.currentTime = 0; spinSound.play(); } catch(e) {}
+
+        const intervalIds = [];
+        slots.forEach((slot, index) => {
+            const stopDelay = baseMs + index * gapMs;
+            longestSpin = Math.max(longestSpin, stopDelay);
+
+            intervalIds[index] = setInterval(() => {
+                const rand = Math.floor(Math.random() * 52) + 1;
+                slot.src = `zdjecia/${rand}.jpg`;
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(intervalIds[index]);
+                slot.src = `zdjecia/${results[index]}.jpg`;
+
+                try { stopSound.currentTime = 0; stopSound.play(); } catch(e) {}
+
+                if (index === slots.length - 1) {
+                    try { spinSound.pause(); spinSound.currentTime = 0; } catch(e) {}
+                }
+            }, stopDelay);
+        });
+
+        setTimeout(() => {
+            button.disabled = false;
+            const finalImages = results.map(n => `zdjecia/${n}.jpg`);
+            const allSame = finalImages.every(img => img === finalImages[0]);
+
+            if (allSame) {
+                message.style.display = "block";
+                createConfetti();
+                try { winSound.currentTime = 0; winSound.play(); } catch(e) {}
+            }
+        }, longestSpin + 250);
+    }
+
+    button.addEventListener("click", spinSlots);
+</script>
+</body>
+</html>
